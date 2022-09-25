@@ -1,0 +1,60 @@
+ ///
+ /// @file    multiDerived1.cc
+ /// @author  lemon(haohb13@gmail.com)
+ /// @date    2018-06-25 11:34:05
+ ///
+ 
+#include <iostream>
+using std::cout;
+using std::endl;
+
+
+//C++支持多重继承(多基派生)
+//Java只支持单根继承
+
+class A
+{
+public:
+	void show() const {	cout << "A::show()   " << " _ia = "<< _ia << endl;	}
+private:
+	int _ia;
+};
+
+class B
+: virtual public A
+{
+public:
+	void display() const {	cout << "B::display()" << endl;	}
+
+private:
+	int _ib;
+};
+
+class C 
+: virtual public A
+{
+private:
+	int _ic;
+};
+
+class D
+: public B
+, public C
+{
+private:
+	int _id;
+};
+ 
+int main(void)
+{
+	D d;
+	//2. 多重继承的二义性： 存储空间的二义性 ---> 解决方法: 采用虚继承
+	d.show();
+
+	cout << "sizeof(A) = " << sizeof(A) << endl;
+	cout << "sizeof(B) = " << sizeof(B) << endl;
+	cout << "sizeof(C) = " << sizeof(C) << endl;
+	cout << "sizeof(D) = " << sizeof(D) << endl;
+
+	return 0;
+}
