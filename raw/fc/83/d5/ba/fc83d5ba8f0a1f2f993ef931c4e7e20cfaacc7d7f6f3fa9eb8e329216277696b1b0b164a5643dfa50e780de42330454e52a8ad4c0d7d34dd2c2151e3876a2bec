@@ -1,0 +1,39 @@
+ ///
+ /// @file    Eventfd.h
+ /// @author  lemon(haohb13@gmail.com)
+ /// @date    2018-07-06 11:40:21
+ ///
+ 
+#ifndef __WD_EVENTFD_H__
+#define __WD_EVENTFD_H__
+
+#include <functional>
+
+
+
+namespace wd
+{	
+class Eventfd
+{
+public:
+	using Callback = std::function<void()>;
+
+	Eventfd(Callback && cb);
+
+	void start();//监听_fd是否有pollin事件
+	void stop();//不再监听_fd
+	void wakeup();//别的线程唤醒_fd（写一个字到_fd,激活_fd的状态）
+
+private:
+	void handleRead();		//从_fd中读数据
+
+private:
+	int _fd;
+	Callback _cb;
+	bool _isStarted;//是否开始监听
+};
+}
+
+
+
+#endif
