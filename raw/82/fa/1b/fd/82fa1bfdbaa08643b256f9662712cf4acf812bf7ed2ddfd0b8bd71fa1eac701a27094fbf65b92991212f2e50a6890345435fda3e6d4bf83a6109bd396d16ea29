@@ -1,0 +1,77 @@
+ ///
+ /// @file    constructDerived1.cc
+ /// @author  lemon(haohb13@gmail.com)
+ /// @date    2018-06-25 14:48:42
+ ///
+ 
+#include <iostream>
+using std::cout;
+using std::endl;
+
+
+
+class Base
+{
+public:
+#if 1
+	Base()
+	{
+		cout << "Base()" << endl;
+	}
+#endif
+	Base(int ib)
+	: _ib(ib)
+	{
+		cout << "Base(int)" << endl;
+	}
+
+	~Base()
+	{
+		cout << "~Base()" << endl;
+	}
+
+private:
+	int _ib;
+};
+
+// 派生类没有显式定义构造函数，但基类有显式定义构造函数
+// 则创建派生类对象时，会自动调用基类的默认构造函数, 此时
+// 基类必须提供一个默认构造函数
+class Derived
+: public Base
+{
+public:
+	Derived()
+		: Base()
+	{	cout << "Derived()" << endl;	}
+
+	Derived(int id)
+		: Base()
+		, _id(id)
+	{
+		cout << "Derived(int) " << endl;
+	}
+
+	Derived(int ib, int id)
+		: Base(ib)
+		, _id(id)
+	{
+		cout << "Derived(int,int)" << endl;
+	}
+
+	~Derived()
+	{
+		cout << "~Derived()" << endl;
+	}
+	
+private:
+	int _id;
+};
+ 
+int main(void)
+{
+	Derived d(1, 2);
+
+
+	return 0;
+}
