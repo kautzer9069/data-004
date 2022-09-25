@@ -1,0 +1,35 @@
+#include <iostream>
+using std::cout;
+using std::endl;
+
+class Base
+{
+public:
+	Base()
+	{
+		cout << "Base()" << endl;
+	}
+};
+
+// 派生类有显式定义构造函数，但基类没有显式定义构造函数
+// 则创建派生类对象时，会自动调用基类的默认构造函数
+class Derived
+: public Base
+{
+public:
+	Derived(int id)
+	: Base()
+	, _id(id)
+	{
+		cout << "Derived(int) " << endl;
+	}
+private:
+	int _id;
+};
+ 
+int main(void)
+{
+	Derived d(1);
+
+	return 0;
+}
