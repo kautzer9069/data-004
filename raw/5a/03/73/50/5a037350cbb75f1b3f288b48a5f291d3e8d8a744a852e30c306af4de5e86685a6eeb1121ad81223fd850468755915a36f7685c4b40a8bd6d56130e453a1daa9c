@@ -1,0 +1,59 @@
+#include <string.h>
+#include <iostream>
+using std::cout;
+using std::endl;
+
+class Base{
+public:
+	Base(const char * pdata)
+		: _pdata(new char[strlen(pdata) + 1]())	{
+		cout << "Base(const char *)" << endl;
+		strcpy(_pdata, pdata);
+	}
+	Base(const Base & rhs)
+		: _pdata(new char[strlen(rhs._pdata) + 1]()){
+		strcpy(_pdata, rhs._pdata);
+		cout << "Base(const Base & )" << endl;
+	}
+	Base & operator=(const Base & rhs)	{
+		cout << "Base & operator=(const Base&)" << endl;
+		if(this != &rhs){
+			delete [] _pdata;
+			_pdata = new char[strlen(rhs._pdata) + 1]();
+			strcpy(_pdata, rhs._pdata);
+		}
+		return *this;
+	}
+	~Base()	{delete [] _pdata;cout << "~Base()" <<endl;	}
+
+	friend std::ostream & operator<<(std::ostream & os, const Base & rhs);
+private:	char * _pdata;
+};//end of Base
+
+std::ostream & operator<<(std::ostream & os, const Base & rhs){	os << rhs._pdata;	return os;}
+//当派生类没有显式定义复制控制函数，基类有显式定义，若执行
+//派生类对象之间的复制控制，则会自动调用基类相应的复制控制函数
+class Derived
+: public Base{
+public:
+	Derived(const char * pdata)
+	: Base(pdata)	{		cout << "Derived(const char *)" << endl;	}
+	~Derived()	{		cout << "~Derived()" << endl;	}
+	friend std::ostream & operator<<(std::ostream & os, const Derived & rhs);
+};
+ 
+std::ostream & operator<<(std::ostream & os, const Derived & rhs){	os << *(Base*)&rhs;	return os;}
+
+int main(void){
+	Derived d1("hello");
+	cout << "d1 = "<< d1 << endl;
+	Derived d2 = d1;
+	cout << "d2 = " << d2 << endl << endl;
+
+	Derived d3("world");
+	cout << "d3 = " << d3 << endl;
+	d3 = d1;
+	cout << "d3 = " << d3 << endl;
+
+	return 0;
+}
