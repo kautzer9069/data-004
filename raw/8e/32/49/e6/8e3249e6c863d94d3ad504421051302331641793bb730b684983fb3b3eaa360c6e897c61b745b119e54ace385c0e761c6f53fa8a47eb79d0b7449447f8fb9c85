@@ -1,0 +1,89 @@
+ ///
+ /// @file    constructDerived1.cc
+ /// @author  lemon(haohb13@gmail.com)
+ /// @date    2018-06-25 14:48:42
+ ///
+ 
+#include <iostream>
+using std::cout;
+using std::endl;
+
+
+
+class Base
+{
+public:
+#if 1
+	Base()
+	{
+		cout << "Base()" << endl;
+	}
+#endif
+	Base(int ib)
+	: _ib(ib)
+	{
+		cout << "Base(int)" << endl;
+	}
+
+	~Base()
+	{
+		cout << "~Base()" << endl;
+	}
+
+private:
+	int _ib;
+};
+
+class C
+{
+public:
+	C()
+	{	cout << "C()" << endl;	}
+
+	C(int ix)
+	: _ix(ix)
+	{
+		cout << "C(int)" << endl;
+	}
+
+	void print() const
+	{	cout << "C::print()" << endl;	}
+
+	~C()
+	{
+		cout << "~C()" << endl;
+	}
+
+private:
+	int _ix;
+};
+
+// 派生类没有显式定义构造函数，但基类有显式定义构造函数
+// 则创建派生类对象时，会自动调用基类的默认构造函数, 此时
+// 基类必须提供一个默认构造函数
+class Derived
+: public Base{
+public:
+	Derived()
+		: Base(){	cout << "Derived()" << endl;	}
+	Derived(int id)
+		: Base()
+		, _id(id)	{		cout << "Derived(int) " << endl;	}
+	Derived(int ib, int id, int ix)
+		: Base(ib)
+		, _c(ix)
+		, _id(id){		cout << "Derived(int,int)" << endl;	}
+	void print() const	{	_c.print();	}
+	~Derived()	{		cout << "~Derived()" << endl;	}
+private:
+	C _c;// 作为对象成员，就是组合关系
+	int _id;
+};
+ 
+int main(void)
+{
+	Derived d(1, 2, 100);
+
+
+	return 0;
+}
