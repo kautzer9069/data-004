@@ -1,0 +1,62 @@
+ ///
+ /// @file    rsstest.cc
+ /// @author  lemon(haohb13@gmail.com)
+ /// @date    2018-06-18 10:24:15
+ ///
+ 
+#include "tinyxml2.h"
+
+#include <boost/regex.hpp>
+#include <iostream>
+#include <string>
+using std::cout;
+using std::endl;
+using std::string;
+using namespace tinyxml2;
+
+
+void test0(void)
+{
+	XMLDocument doc;
+	doc.LoadFile("coolshell.xml");
+	if(doc.ErrorID())
+	{
+		cout << "loadfile error!" << endl;
+		return;
+	}
+
+	string title;
+	string link;
+	string content;
+	string precontent;
+
+	XMLElement * itemNode = doc.FirstChildElement("rss")->FirstChildElement("channel")->FirstChildElement("item");
+	XMLElement * titleNode = itemNode->FirstChildElement("title");
+	XMLElement * linkNode = itemNode->FirstChildElement("link");
+	XMLElement * descriptionNode = itemNode->FirstChildElement("description");//
+	XMLElement * contentNode = itemNode->FirstChildElement("content:encoded");//扩展节点
+
+	if(titleNode)
+		title = titleNode->GetText();		
+	if(linkNode)
+		link = linkNode->GetText();
+
+	if(contentNode) 
+		precontent = contentNode->GetText();
+	else
+		precontent = descriptionNode->GetText();
+	
+	cout << ">>> title: " << title << endl;
+	cout << ">>> link: " << link << endl;
+
+	boost::regex re("<[^>]+>");
+	content = boost::regex_replace(precontent, re, string(""));
+
+	cout << ">>> content: " << content << endl;
+}
+ 
+int main(void)
+{
+	test0();
+	return 0;
+}
