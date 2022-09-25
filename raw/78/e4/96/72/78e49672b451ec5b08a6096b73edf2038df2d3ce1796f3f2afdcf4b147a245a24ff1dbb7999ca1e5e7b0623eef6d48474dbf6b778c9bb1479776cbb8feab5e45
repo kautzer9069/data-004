@@ -1,0 +1,91 @@
+ ///
+ /// @file    constructDerived1.cc
+ /// @author  lemon(haohb13@gmail.com)
+ /// @date    2018-06-25 14:48:42
+ ///
+ 
+#include <iostream>
+using std::cout;
+using std::endl;
+
+
+
+class Base
+{
+public:
+	Base()
+	{
+		cout << "Base()" << endl;
+	}
+
+	Base(int ib)
+	: _ib(ib)
+	{
+		cout << "Base(int)" << endl;
+	}
+
+	~Base()
+	{
+		cout << "~Base()" << endl;
+	}
+
+	void func(int x)
+	{
+		cout << "Base::func() 形参x = " << x << endl;
+		cout << "Base::func()" << endl;
+	}
+protected:
+	int _ix;
+private:
+	int _ib;
+};
+
+class Derived
+: public Base
+{
+public:
+	Derived()
+	: Base()
+	{	cout << "Derived()" << endl;	}
+
+	Derived(int id)
+	: Base()
+	, _id(id)
+	{
+		cout << "Derived(int) " << endl;
+	}
+
+	Derived(int ib, int id, int ix)
+	: Base(ib)
+	, _id(id)
+	, _ix(ix)
+	{
+		cout << "Derived(int,int)" << endl;
+	}
+
+	~Derived()
+	{
+		cout << "~Derived()" << endl;
+	}
+
+	//一旦派生类定义与基类同名的函数，就会发生隐藏(oversee)
+	void func()
+	{
+		cout << "Derived::_ix = " << _ix << endl;//这里发生隐藏
+		cout << "Base::_ix = " << Base::_ix << endl;
+		cout << "Derived::func()" << endl;
+	}
+private:
+	int _id;
+	int _ix;
+};
+ 
+int main(void)
+{
+	Derived d(1, 2, 10);
+	//d.func(10);//error, 发生了隐藏
+	d.func();
+	cout << endl;
+	d.Base::func(10);//如果一定要调用基类同名函数，则要使用作用域限定符
+	return 0;
+}
