@@ -1,0 +1,49 @@
+ ///
+ /// @file    variadicTemplate.cc
+ /// @author  lemon(haohb13@gmail.com)
+ /// @date    2018-06-14 16:10:17
+ ///
+ 
+#include <iostream>
+#include <string>
+using std::cout;
+using std::endl;
+using std::string;
+
+
+#if 0
+template <typename... Args>// Args 模板参数包
+void print(Args...args) //args 函数参数包
+{
+	//求取可变参数的个数
+	cout << "sizeof...(Args) = " << sizeof...(Args) << endl;
+	cout << "sizeof...(args) = " << sizeof...(args) << endl;
+}
+#endif
+
+void print()
+{
+	cout << endl;
+}
+
+template <typename T, typename... Args>
+void print(T t, Args... args)
+{
+	cout << t << " ";
+	print(args...);// 参数包展开时，3个点要放在参数包的右边
+}
+
+int main(void)
+{
+	int a = 1;
+	double b = 2.2;
+	char ch = 'a';
+	print(a, b, ch, "hello", string("world"));
+	//print(b, ch, "hello", string("world"));
+	//print(ch, "hello", string("world"));
+	//print("hello", string("world"));
+	//print(string("world"));
+	//print();
+	
+	return 0;
+}
