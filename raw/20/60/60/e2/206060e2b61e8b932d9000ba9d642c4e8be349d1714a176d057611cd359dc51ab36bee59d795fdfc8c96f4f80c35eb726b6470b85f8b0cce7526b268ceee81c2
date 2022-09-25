@@ -1,0 +1,33 @@
+ ///
+ /// @file    replace.cc
+ /// @author  lemon(haohb13@gmail.com)
+ /// @date    2018-06-19 11:26:38
+ ///
+ 
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <iterator>
+using std::cout;
+using std::endl;
+using std::replace_if;
+using std::vector;
+using std::ostream_iterator;
+
+void test0(void)
+{
+	vector<int> numbers{1, 2, 3, 4, 5, 6};
+
+	std::less<int> lt;// lt(x1, x2)    
+	//std::bind1st, std::bind2nd 函数适配器(绑定器)
+	replace_if(numbers.begin(), numbers.end(), std::bind1st(lt, 4), 10);
+
+	std::copy(numbers.begin(), numbers.end(), ostream_iterator<int>(cout, " "));
+	cout << endl;
+}
+
+int main(void)
+{
+	test0();
+	return 0;
+}
