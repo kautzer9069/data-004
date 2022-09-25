@@ -1,0 +1,69 @@
+#include <iostream>
+using std::cout;
+using std::endl;
+
+class Base{
+public:
+	Base(){
+		cout << "Base()" << endl;
+	}
+	Base(int ib)
+	: _ib(ib){
+		cout << "Base(int)" << endl;
+	}
+	void print() const{	cout << "Base::_ib = " << _ib << endl;	}
+	~Base(){		cout << "~Base()" << endl;	}
+private:	int _ib;
+};//end of base
+
+class Derived
+: public Base{
+public:
+	Derived()
+		: Base(){	cout << "Derived()" << endl;	}
+	Derived(int id)
+		: Base()
+		, _id(id){	cout << "Derived(int) " << endl;}
+	Derived(int ib, int id)
+		: Base(ib)
+		, _id(id)	{	cout << "Derived(int,int)" << endl;	}
+	void show() const{
+		print();
+		cout << "Derived::_id = " << _id << endl;
+	}
+	~Derived()	{	cout << "~Derived()" << endl;	}
+private:	int _id;
+};//end of Derived
+
+
+//基类与派生类对象的转换:
+//可以把派生类对象赋值给基类对象
+//可以把派生类对象赋值给基类引用
+//可以用基类指向派生类对象
+
+int main(void)
+{
+	Base base(10);
+	base.print();
+	cout << endl;
+	Derived derived(1, 2);
+
+	//Base & operator=(const Base & rhs)
+	base = derived;//base.operator=(derived)
+	base.print();
+
+	//Derived & operator=(const Derived &rhs)
+	//derived = base;//errror, derived.operator=(base);
+	
+	Base * pbase = &derived;
+	pbase->print();
+
+	//Derived * pDerived = &base;//error
+	//pDerived->show();
+	
+	Base & ref = derived;
+	ref.print();
+
+
+	return 0;
+}
