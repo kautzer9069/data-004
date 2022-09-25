@@ -1,0 +1,143 @@
+ ///
+ /// @file    templateStack.cc
+ /// @author  lemon(haohb13@gmail.com)
+ /// @date    2018-06-14 16:40:22
+ ///
+ 
+#include <iostream>
+#include <string>
+using std::cout;
+using std::endl;
+using std::string;
+
+template <typename T, int kSize = 10>
+class Stack
+{
+public:
+	Stack();
+	 
+	~Stack();
+
+	bool full() const;
+
+	bool empty() const;
+
+	void push(const T & t);
+
+	void pop();
+
+	T top();
+
+private:
+	int _top;
+	T * _arr;
+};
+
+template <typename T, int kSize>
+Stack<T, kSize>::Stack()
+: _top(-1)
+, _arr(new T[kSize]())
+{
+
+}
+
+template <typename T, int kSize>
+Stack<T, kSize>::~Stack()
+{
+	delete [] _arr;
+}
+
+template <typename T, int kSize>
+bool Stack<T, kSize>::full() const
+{
+	return _top == (kSize - 1);
+}
+
+template <typename T, int kSize>
+bool Stack<T, kSize>::empty() const
+{
+	return _top == - 1;
+}
+
+
+template <typename T, int kSize>
+void Stack<T, kSize>::push(const T & t)
+{
+	if(!full())	
+	{
+		_arr[++_top] = t;
+	} else
+		cout << "stack is full, cannot push an element any more!" << endl;
+}
+
+
+template <typename T, int kSize>
+void Stack<T, kSize>::pop()
+{
+	if(!empty())
+		--_top;
+	else
+		cout << "stack is empty, cannot pop " << endl;
+}
+
+
+template <typename T, int kSize>
+T Stack<T, kSize>::top()
+{
+	return _arr[_top];
+}
+
+
+
+int test0(void)
+{
+	Stack<int> stack;
+	cout << "此时栈是否为空?" << stack.empty() << endl;
+	stack.push(1);
+	cout << "此时栈是否为空?" << stack.empty() << endl;
+
+	for(int idx = 2; idx < 12; ++idx)
+	{
+		stack.push(idx);
+	}
+	cout << "此时栈是否已满?" << stack.full() << endl;
+
+	while(!stack.empty())
+	{
+		cout << stack.top() << " ";
+		stack.pop();
+	}
+	cout << endl;
+	return 0;
+}
+
+int test1(void)
+{
+//	vector<string> vec;
+
+	Stack<string> stack;
+	cout << "此时栈是否为空?" << stack.empty() << endl;
+	stack.push("AA");
+	cout << "此时栈是否为空?" << stack.empty() << endl;
+
+	for(int idx = 1; idx < 11; ++idx)
+	{
+		string s(2,'A' + idx);
+		stack.push(s);
+	}
+	cout << "此时栈是否已满?" << stack.full() << endl;
+
+	while(!stack.empty())
+	{
+		cout << stack.top() << " ";
+		stack.pop();
+	}
+	cout << endl;
+	return 0;
+}
+int main(void)
+{
+	//test0();
+	test1();
+	return 0;
+}
