@@ -1,0 +1,8 @@
+
+代码实现:
+
+1. 理解eventfd的用法，并实现基于对象的Eventfd
+
+2. 理解timerfd的用法，并实现基于对象的Timer
+
+3. 实现Reactor模式，并结合线程池Threadpool搭建框架，实现server-client的回显功能
