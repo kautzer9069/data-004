@@ -1,0 +1,44 @@
+ ///
+ /// @file    TestEventfd.cc
+ /// @author  lemon(haohb13@gmail.com)
+ /// @date    2018-07-06 11:56:54
+ ///
+ 
+#include "Eventfd.h"
+#include "Thread.h"
+
+#include <unistd.h>
+#include <pthread.h>
+
+#include <iostream>
+using std::cout;
+using std::endl;
+
+void getNumber()
+{
+	::srand(::time(NULL));
+	int number = ::rand() % 100;
+	cout << "subThread: "<< pthread_self() <<  ">>> number = " << number << endl;
+}
+ 
+int main(void)
+{
+	wd::Eventfd eventfd(getNumber);
+
+	wd::Thread subthread(std::bind(&wd::Eventfd::start, &eventfd));//注册回调函数
+
+	subthread.start();//调用start方法，创建子线程，执行预先注册的回调函数
+	::sleep(2);
+
+	int cnt = 10;
+	while(cnt--) {
+		eventfd.wakeup();//主线程通知子线程去做任务
+		sleep(1);
+	}
+	sleep(3);
+	eventfd.stop();
+
+	subthread.join();
+
+	return 0;
+}
