@@ -1,0 +1,35 @@
+ ///
+ /// @file    Example.cc
+ /// @author  lemon(haohb13@gmail.com)
+ /// @date    2018-06-14 15:56:33
+ ///
+ 
+#include <iostream>
+using std::cout;
+using std::endl;
+
+class Example
+{
+public:
+	int add(int x, int y)
+	{
+		return x + y;
+	}
+
+	template <typename T>
+	T add(T x, T y)
+	{
+		return x + y;
+	}
+};
+ 
+int main(void)
+{
+	int a = 3, b = 4;
+	double d1 = 1.1, d2 = 2.2;
+	Example e;
+	cout << e.add(a, b) << endl;
+	cout << e.add(d1, d2) << endl;
+
+	return 0;
+}
