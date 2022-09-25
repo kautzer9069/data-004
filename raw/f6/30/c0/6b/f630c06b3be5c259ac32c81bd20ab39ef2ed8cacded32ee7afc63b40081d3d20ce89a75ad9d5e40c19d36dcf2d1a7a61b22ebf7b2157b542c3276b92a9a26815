@@ -1,0 +1,143 @@
+ ///
+ /// @file    abuseString.cc
+ /// @author  lemon(haohb13@gmail.com)
+ /// @date    2018-06-11 09:47:52
+ ///
+ 
+#include <string.h>
+#include <iostream>
+#include <vector>
+using std::cout;
+using std::endl;
+using std::vector;
+
+
+class String
+{
+public:
+	String()
+	: _pstr(new char[1]())
+	{
+		cout << "String()" << endl;
+	}
+
+	String(const char * pstr)
+	: _pstr(new char[strlen(pstr) + 1]())
+	{
+		cout << "String(const char *)" << endl;
+		strcpy(_pstr, pstr);
+	}
+
+	String(const String & rhs)
+	: _pstr(new char[strlen(rhs._pstr) + 1])
+	{
+		strcpy(_pstr, rhs._pstr);
+	}
+
+	String & operator=(const String & rhs)
+	{
+		if(this != &rhs){
+			delete [] _pstr;
+
+			_pstr = new char[strlen(rhs._pstr) +1]();
+			strcpy(_pstr, rhs._pstr);
+		}
+		return *this;
+	}
+
+	String & operator+=(const String & rhs)
+	{
+		int len = strlen(_pstr) + strlen(rhs._pstr) + 1;
+		char * tmp = new char[len]();
+		strcpy(tmp, _pstr);
+		strcat(tmp, rhs._pstr);
+		delete [] _pstr;
+		_pstr = tmp;
+		return *this;
+	}
+
+	String & operator+=(const char * rhs)
+	{
+		String tmp(rhs);
+		*this += tmp;
+		return *this;
+	}
+
+	void print()
+	{
+		if(_pstr)
+			cout << _pstr << endl;
+	}
+
+	~String()
+	{
+		delete [] _pstr;
+		cout << "~String()" << endl;
+	}
+
+	friend std::ostream & operator<<(std::ostream & os, const String & rhs);
+	friend std::istream & operator>>(std::istream & is, String & rhs);
+	friend String operator+(const String & lhs, const String & rhs);
+private:
+char * _pstr;
+};
+
+String operator+(const String & lhs, const String & rhs)
+{
+	String tmp;
+	tmp += lhs;
+	tmp += rhs;
+	return tmp;
+}
+
+std::ostream & operator<<(std::ostream & os, const String & rhs)
+{
+	os << rhs._pstr;
+	return os;
+}
+
+std::istream & operator>>(std::istream & is, String & rhs)
+{
+#if 1
+	vector<char> vec;
+	char ch;
+	while((ch = is.get()), !is.eof())
+	{
+		vec.push_back(ch);
+	}
+	delete [] rhs._pstr;/// 这里不能少
+	rhs._pstr = new char[vec.size() + 1]();
+	strncpy(rhs._pstr, &vec[0], vec.size());
+	return is;
+#endif
+
+#if 0
+	char buff[65536] = {0};//64K
+	is >> buff;
+	delete [] rhs._pstr;
+	rhs._pstr = new char[strlen(buff) + 1]();
+	strcpy(rhs._pstr, buff);
+	return is;
+#endif 
+}
+
+
+int main(void)
+{
+	String s;
+
+	String s1 = "helloworld";
+	cout << "s1 = " << s1 << endl;
+	String s2("worldafjaljfasj");
+	cout << "s2 = " << s2 << endl;
+	String s3("shenzheng");
+	cout << "s3 = " << s3 << endl;
+
+	String s4 = s1 + s2 + s3;
+	cout << "s4 = " << s4 << endl;
+
+//	std::cin >> s4;
+//	cout << "s4 = " << s4 << endl;
+
+	return 0;
+}
