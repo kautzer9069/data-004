@@ -1,0 +1,82 @@
+ ///
+ /// @file    Point3D.cc
+ /// @author  lemon(haohb13@gmail.com)
+ /// @date    2018-06-25 10:57:32
+ ///
+ 
+#include <iostream>
+using std::cout;
+using std::endl;
+ 
+class Point
+{
+public:
+	Point(int ix, int iy)
+	: _ix(ix)
+	, _iy(iy)
+	{	cout << "Point(int,int)" << endl;	}
+	
+	void print() const
+	{
+		cout << "(" << _ix
+			 << "," << _iy
+			 << ")" << endl;
+	}
+
+	~Point()
+	{	cout << "~Point()" << endl;	}
+
+	int getX() const {	return _ix;	}
+
+protected:// 将访问权限开放给派生类
+	int getY() const {	return _iy;	}
+private:
+	int _ix;
+	int _iy;
+};
+
+
+
+class Point3D
+: protected Point 
+{
+public:
+	Point3D(int ix, int iy, int iz)
+	: Point(ix, iy)
+	, _iz(iz)
+	{
+		cout << "Point3D(int,int,int)" << endl;
+	}
+
+	void display() const
+	{
+		//cout << "(" << _ix  //基类的私有成员在派生类不能内部直接访问
+		cout << "(" << getX()  //基类的私有成员在派生类内部直接访问
+			 << "," << getY()  // 当使用procted继承时，基类的非私有成员，在派生类内部访问权限都是protected的
+			 << "," << _iz << endl;
+	}
+
+private:
+	int _iz;
+};
+
+class Point4D
+: public Point3D
+{
+	void show() const
+	{
+		getX();
+		getY();
+		print();
+	}
+};
+
+int main(void)
+{
+	Point3D pt(1, 2, 3);
+	pt.print();//error, 采用procted继承, 在派生类类之外，派生类对象都不可以访问基类的所有成员
+	pt.getX();//error
+	pt.getY();//error,在派生类之外，派生类对象都不能进行访问基类的非公有成员
+
+	return 0;
+}
