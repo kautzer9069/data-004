@@ -1,0 +1,1 @@
+geth --datadir "C:\Mychains\dev" --identity "mydev" --rpccorsdomain "*" --networkid 99 console
