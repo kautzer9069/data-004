@@ -1,0 +1,85 @@
+La sécurité informatique sous Linux - 1ère partie
+
+La sécurité informatique oppose, sur l'échiquier mondial, ceux qui la font à ceux qui la défont. Pourquoi tant d'énergie dépensée ? Le secret, évidemment, qu'il soit défense, industriel ou financier, a motivé les organisations d'état, les banques et les entreprises à investir dans des dispositifs de sécurité de plus en plus complexes. Mais, de plus en plus, la sécurité informatique, ou plutôt l'insécurité, gagne du terrain. L'importance que prend Internet chez les particuliers, ainsi que la démocratisation des techniques de cracking font qu'aujourd'hui l'ensemble de la communauté informatique est concerné. Dans ce contexte, utiliser un serveur ou un poste personnel relié à l'Internet sous Linux peut être un atout comme une source de problèmes.
+
+Cette série d'articles n'a pas la prétention d'être une présentation exhaustive sur les techniques utilisées par les crackers pour s'approprier ou faire tomber un système. Ce n'est pas non plus un livre de recettes qu'il suffit d'appliquer pour être protégé. La sécurité informatique est en continuelle mouvance et ce n'est pas parce qu'un système est soi-disant sécurisé un matin qu'il ne tombera pas l'après-midi dans les mains d'un cracker. Cependant, il existe des procédures simples à mettre en oeuvre sur tout poste Linux, qui permettent d'augmenter le degré de sécurité et qui sont susceptibles de décourager certains crackers (et d'encourager certains autres ?). Ces articles porteront sur certains problèmes de sécurité que l'on peut rencontrer sous Linux, en expliquant leur principe et en donnant des références à consulter pour mettre des solutions en place.
+
+Ce premier volet est axé sur la sécurité système, celle qui vise à sécuriser un système, même isolé, de ses propres utilisateurs. Nous aborderons le mois prochain la sécurité réseau interne, qui essaie de protéger un système des autres systèmes sur un réseau local. Enfin, nous pourrons nous concentrer sur la sécurité réseau externe, afin que des postes isolés ou des réseaux locaux puissent contrer les éventuelles attaques venant de l'extérieur et plus particulièrement d'Internet.
+
+Des hackers, des crackers et des autres
+
+Linux est un des systèmes les plus ouverts qui soit. Chacun peut disposer des sources du noyau et des nombreux logiciels qui l'accompagnent. Un bon programmeur peut traquer les bugs, inclure des améliorations, modifier les sources, compiler tout ou partie du système Linux. C'est ce que j'appelle un hacker. Pour vous en convaincre, ouvrer un xterm, placez-vous dans le répertoire des sources de Linux (cd /usr/src/linux) et tapez make xconfig. Le bouton tout en bas de la fenêtre vous propose le choix Kernel hacking. Il ne s'agit pas là d'un choix qui vous permettrait d'attaquer votre propre système, mais d'une option utile aux personnes travaillant sur le noyau.
+
+Cette disponibilité des sources a deux effets sur la sécurité : un bon hacker peut trouver un bug dans un source susceptible d'être utilisé pour déstabiliser ou attaquer le système. Il est probable qu'il décidera d'en avertir la communauté Linux et proposera parfois un correctif. C'est l'aspect positif des choses : le noyau ou le programme incriminé sera rapidement corrigé et la sécurité accrue. Le revers de la médaille est que certaines personnes vont pouvoir exploiter ce bug, pendant quelques temps, afin de s'introduire sur des systèmes. C'est ce que j'appelle un cracker.
+
+Les motivations des crackers peuvent être multiples et différentes : certains peuvent être des sortes de mercenaires agissant par intérêt, pour beaucoup c'est un simple jeu intellectuel, quelques-uns font ça pour essayer de se prouver qu'ils y connaissent quelque chose en informatique. Certaines actions sont louables (par exemple, avertir un particulier qu'on a pu facilement récupérer sont fichier de mots de passe et qu'il faudrait qu'il fasse quelque chose), d'autres sont purement destructices (formater les disques durs d'un système). Certains sont des pirates, d'autres pas.
+
+Et les autres dans tout ça ? Eh bien, c'est l'ensemble des personnes responsables d'une ou plusieurs machines, de l'administrateur système et réseau au particulier relié à Internet. Il n'y a pas de limite franche entre ces trois communautés : on peut très bien être hacker, cracker gentil et administrateur système ou être un cracker méchant et se faire attaquer par un groupe de crackers gentils, etc.
+
+Aujourd'hui, quel que soit le système utilisé, tout le monde peut être attaqué. En vous reliant à Internet, vous pouvez vous faire des amis, comme des ennemis. De plus en plus d'attaques aveugles sont menées sur les systèmes les moins sécurisés par des personnes n'ayant pas compris ce qu'est un "bon" cracker. Se protéger n'est donc pas un luxe.
+
+La sécurité système
+
+Le but d'un cracker est d'acquérir des privilèges sur une machine. Avoir accès à un compte, pouvoir lancer des programmes et, le fin du fin, être root à la place du root. Il est donc nécessaire, avant toute chose, d'essayer de mettre en place des mécanismes de sécurité système.
+
+John the Ripper et ses camarades
+
+Le fichier /etc/passwd contient des enregistrements concernant les utilisateurs du système. On trouve, entre autres, les noms de login, les numéros d'utilisateurs (UID) et du groupe par défaut (GID), le shell de l'utilisateur, son répertoire personnel et son mot de passe crypté. Le mot de passe n'est jamais stocké en clair sur une machine Linux. Les deux premiers caractères du mot de passe crypté sont une sorte de clé de codage (appelée salt). L'algorithme de cryptage n'est pas réversible : on ne peut pas, de façon algorithmique, décrypter un mot de passe crypté pour trouver le mot de passe en clair.
+
+Lors d'une tentative de connexion, le système demande d'abord à l'utilisateur son nom de login. Grâce à ce nom, le système trouve l'entrée correspondante dans le fichier /etc/passwd. Il demande ensuite le mot de passe en clair. Ce mot de passe est alors crypté grâce à la clé de codage et les deux mots de passe cryptés sont alors comparés. S'ils sont égaux, la connexion sur le système est autorisée.
+
+Le problème du fichier /etc/passwd est que certains processus utilisateur l'emploient pour acquérir des informations. Il doit donc être lisible par tous les utilisateurs. Evidemment, seul root possède normalement les droits en écriture sur ce fichier. Cela signifie que tout utilisateur d'un système Linux peut, par un simple cat /etc/passwd, avoir accès à l'ensemble des mots de passe cryptés des autres utilisateurs (dont root).
+
+Soit deux utilisateurs A et B. A connaît le nom de login et le mot de passe crypté de B grâce au fichier /etc/passwd. Pour pouvoir se loguer sous B, A doit reconstituer le mot de passe en clair de B. Les techniques employées reposent sur le même concept : un générateur propose des mots de passe en clair à un module de cryptage. Ce dernier crypte chaque mot avec la clé de codage de B. Si les deux mots de passe cryptés sont égaux, le mot de passe donné par le générateur permet de se loguer sous B. Le générateur est soit un dictionnaire de mots de passe courants, soit un programme Brute Force décrivant entièrement, ou de manière statistique, l'ensemble de tous les mots de passe possibles.
+
+On peut répondre à ce problème de deux façons :
+
+1. Se débrouiller pour que les mots de passe cryptés ne soient plus visibles par les utilisateurs.
+2. Adopter une politique de gestion des mots de passe qui permet de déjouer les logiciels de recherche.
+
+On peut, par exemple, installer un package qui permet de gérer les shadow passwords. Cela revient à déplacer les mots de passe cryptés du fichier /etc/passwd vers le fichier /etc/shadow. Ce dernier n'est pas lisible par les utilisateurs courants. Cette solution modifie des utilitaires système afin de prendre en compte ce changement. Le programme passwd, par exemple, doit modifier les mots de passe dans /etc/shadow et plus dans /etc/passwd. Lire le Shadow Password Howto, disponible dans toutes les bonnes distributions.
+
+On peut aussi avoir recours aux utilitaires employés par les crackers afin de vérifier s'ils sont capables de briser certains des mots de passe de son propre système. Les plus célèbres sont crack et John the Ripper. Pour plus d'informations, consulter : http://www.netrom.com/~cassidy/crack.htm
+
+Enfin, les systèmes Linux modernes intègrent (ou intégreront) une solution unificatrice : PAM ou Pluggable Authentification Modules. L'administrateur système définit grâce à PAM la politique de gestion de mots de passe qui lui convient grâce à l'activation de certains modules et les utilitaires supportant PAM ne sont pas à recompiler. Citons en vrac quelques modules : pam_cracklib permet de vérifier automatiquement la solidité d'un nouveau mot de passe, pam_limits permet de définir des limites pour les utilisateurs (temps CPU, fichiers ouverts, etc.), pam_time permet de définir les horaires d'accès. Documentation sur : http://www.mirror.ac.uk/sites/ftp.kernel.org/pub/linux/libs/pam/
+
+Le mystère du buffer overflow
+
+Sous cette appellation énigmatique se cache une technique de cracking très puissante. Elle a été employée avec succès, et le sera sans doute encore, afin de donner à celui qui l'utilise les droits d'un autre utilisateur, principalement de root. Cette technique est souvent employée par une personne ayant déjà un compte sur un système afin d'obtenir les droits root. Elle peut ausi être employée dans certaines circonstances pour une attaque réseau (interne ou externe).
+
+Elle consiste à faire exécuter, par un processus ayant des droits privilégiés, un code écrit (ou recopié) par le cracker. Les programmes concernés sont ceux qui ont le set-uid bit ou le set-gid bit à 1. Lors d'un ls -l, ces programmes présentent la lettre S au lieu de X pour un attributs d'exécution. Le programme xterm, par exemple, possède le set-uid bit à 1. Comme il appartient à l'utilisateur root, cela signifie qu'il s'exécute toujours avec les droits de root. Sans ce set-uid bit, un processus s'exécute normalement avec les droits de l'utilisateur qui le lance. Vu que le programme a les droits de root, le code du cracker s'exécutera avec ces droits. Il pourra donc, à cet instant, faire ce qu'il désire sur la machine. Beaucoup d'exploits profitent de cet instant pour exécuter un shell, évidemment root. Le cracker se retrouve alors dans une situation de superviseur et tout lui est permis.
+
+Pour concevoir comment cela est possible, il faut comprendre comment Linux gère les processus. Un processus a, typiquement, un segment de données destiné à accueillir les variables globales, un segment de code qui contient le programme qu'exécute le processus et un segment de pile, qui contient les variables locales et les adresses de retour des sous-programmes. Chaque segment possède des droits en lecture, écriture et exécution. On peut lire et écrire dans le segment de données mais on ne peut pas y exécuter du code. Le segment de code est en lecture seule et exécutable. Et malheureusement, diront certains, on peut lire et écrire dans le segment de pile mais aussi y exécuter du code. Si le cracker arrive à placer son propre code sur la pile et à le faire exécuter, il aura créé ou utilisé ce que l'on nomme un exploit.
+
+Pour placer du code sur la pile, le cracker va se servir d'un bug bien connu. Analysons le programme C suivant :
+
+void foo(char *chaine1) {
+  char chaine2[100];
+  strcpy(chaine2, chaine1);
+}
+
+int main(int argc, char *argv[]) {
+  foo(argv[1]);
+}
+
+Cette fonction copie chaine1 dans chaine2. chaine2 étant une variable locale, elle est stockée dans la pile. Lorsque chaine1 contient moins de 100 caractères, le bug n'a pas lieu. Dans le cas contraire, les caractères supplémentaires sont aussi recopiés dans la pile et écrasent les informations s'y trouvant, notamment l'adresse de retour de la fonction. Dans la plupart des cas, on a droit à une formidable segmentation fault au retour de la fonction. Mais imaginons que ces caractères supplémentaires aient une signification pour la machine : disons qu'à la place de l'adresse de retour normale, on place une adresse se trouvant dans la pile, pourquoi pas l'adresse qui suit. Et que, justement à cette adresse, on place le petit programme assembleur exécutant un shell. Le retour de la fonction ne mènera pas le processeur à reprendre là où il devait revenir mais vers le petit programme assembleur... Dans l'exemple présenté, il suffit de passer, en argument 1 du programme, une chaîne assez longue pour se trouver dans cette situation et dont les derniers caractères contiennent le contenu actif.
+
+Le bug exploité est un effet de bord, appelé buffer overflow ou dépassement de tampon. La faute en incombe au programmeur qui aurait dû utiliser une fonction qui ne recopie qu'au plus de 100 caractères (strncpy).
+
+Il est assez difficile de se protéger complètement de ce genre d'attaque. Une bonne solution consiste à repérer les programmes set-uid root sur son système et à installer à intervalles réguliers les dernières versions stables ou les patches de ces logiciels. Les exploits connus sont vite réparés par les programmeurs Linux.
+
+Une solution complémentaire consiste à rendre le segment de pile non exécutable. Il existe un patch pour le noyau Linux 2.0.36. L'inconvénient est que la glibc2 utilise, pour des raisons d'optimisation, l'attribut exécutable de la pile. Le système doit donc être construit autour d'une libc5. Il se peut aussi que quelques programmes ne fonctionnent plus correctement. Pour plus de précisions, voir la distribution nmrcOS qui inclut ce patch : http://www.nmrc.org/nmrcOS/.
+
+L'abominable rootkit
+
+Lorsqu'un système est pris par un cracker, c'est-à-dire que celui-ci est devenu root, il y a toutes les chances pour qu'il installe un rootkit. C'est un ensemble de logiciels et de patches du noyau qui vont permettre à l'intrus de passer inaperçu aux yeux de l'administrateur système. Par exemple, la commande ls sera réécrite pour ne pas laisser apparaître certains fichiers, ps cachera certains processus, netstat n'affichera pas certaines sockets ouvertes, etc. Le cracker peut alors facilement installer une backdoor, c'est-à-dire un accès caché au système, sans que l'administrateur puisse le déceler.
+
+Autant dire que lorsqu'un rootkit est installé sur un système, il n'y a plus grand chose à faire, si ce n'est réinstaller un système propre. Il est cependant utile d'essayer de déceler autant que possible l'installation d'un rootkit. Pour ce faire, certains logiciels calculent des CRC (somme de contrôle) sur des fichiers types (par exemple, ls, ps, netstat, le noyau, etc.) et les stockent dans une base de données. Une vérification périodique est faite sur ces fichiers. Si une différence apparaît, il y a toutes les chances qu'un rootkit ait été installé...
+
+Il est à noter que l'on peut soi-même créer des scripts qui réalisent ces vérifications, en prenant bien garde de ne pas donner à l'intrus la possibilité de modifier les données ou les programmes nécessaires à leur fonctionnement. On peut par exemple placer les scripts et les exécutables sur un support physiquement non inscriptible : une disquette dont on a ôté le cache de protection en écriture ou un CD-Rom. On peut aussi écrire les résultats, c'est-à-dire les valeurs des CRC, sur un support inscriptible mais non lisible par le système : une imprimante.
+
+Conclusion
+
+Il y a encore énormément de choses à dire sur la sécurité. Cet article n'est qu'un début de sensibilisation et le lecteur intéressé pourra parcourir les innombrables pages Web qui traitent de ce sujet. Le site http://www.nmrc.org/nmrcOS/ est un bon point d'entrée pour apprendre ce que sécuriser un système Linux signifie. D'autres projets, ayant eux aussi l'ambition de créer une distribution Linux sécurisée, sont en cours : http://www.bastille-linux.org, http:///www.kha0s.org (avec un zéro et pas un O), http://www.reseau.nl/securelinux.
+
+La sécurité est une discipline à part entière, dans laquelle certains plongent corps et âmes, pour parfois n'en jamais ressortir. De la prudence à la paranoïa, le chemin est court, trop court... 
