@@ -1,0 +1,136 @@
+#include<reg52.h>
+#define uchar unsigned char
+sbit qian=P1^1;
+sbit right=P1^2;
+sbit left=P1^0;
+sbit rightd1=P1^3;
+sbit rightd2=P1^4;
+sbit leftd1=P1^5;
+sbit leftd2=P1^6;
+sbit p17=P1^7;
+//===================
+void delay(uchar n);
+void run_qianhou(bit x); //向前或向后开，0为后，1为前。
+void run_leftright(bit x);  //向左向右开,0为左，1为右。
+void ting();		   //停车。
+void time0();		   //定时器0中断（此功能我没有用，只是备用，你不要管它）
+//===================
+uchar ust=0;
+void main()
+{
+bit a=1;
+P1=~0;
+p17=1;
+time0();
+delay(200);
+	while(1)
+	{												 
+		if(qian==0)
+		{
+			ting();
+			run_qianhou(0);
+			delay(70);ting();
+			run_leftright(~a);
+			delay(30);ting();
+		}
+		while(left==0&&right==0)
+		{
+			run_qianhou(0);			
+		}
+		if(right==0)
+		{
+			ting();
+			run_qianhou(0);
+			delay(10);ting();
+			run_leftright(0);
+			delay(30);ting();					  
+		}
+		if(left==0)
+		{
+			ting();
+			run_qianhou(0);
+			delay(10);ting();
+			run_leftright(1);
+			delay(30);ting();					 
+		}
+		run_qianhou(1);
+		p17=~p17;
+	}
+}
+
+void time0()
+{
+	ET0=1;
+	EA=1;
+
+	TMOD=0X01;
+	TH0=76;
+	TL0=0;
+	TR0=1;
+}
+
+
+void ting()
+{
+	leftd1=leftd2=rightd1=rightd2=1;
+}
+
+void run_leftright(bit x)
+{
+	if(x==0)
+	{
+		ting();
+		leftd2=0;
+		delay(10);
+	}
+	else
+	{
+		ting();
+		rightd2=0;	
+		delay(10);
+	}
+}
+
+void run_qianhou(bit x)
+{	
+	if(x==1)
+	{
+		rightd2=1;
+		leftd2=1;
+		rightd1=0;
+		delay(1);
+		leftd1=0;
+	}
+	else
+	{
+		rightd1=1;
+		leftd1=1;
+		rightd2=0;
+		delay(1);
+		leftd2=0;		
+	}
+}
+
+void delay(uchar n)
+{
+	uchar x,y,z;
+	for(x=0;x<n;x++)
+	{
+		for(y=0;y<200;y++)
+		{
+			for(z=0;z<15;z++);
+		}
+	}
+}
+
+void zhongduan0() interrupt 1
+{
+	TH0=76;
+	TL0=3;
+	TR0=1;
+	ust++;
+	if(ust==100)
+	{
+		 ust=0;
+	}
+}
