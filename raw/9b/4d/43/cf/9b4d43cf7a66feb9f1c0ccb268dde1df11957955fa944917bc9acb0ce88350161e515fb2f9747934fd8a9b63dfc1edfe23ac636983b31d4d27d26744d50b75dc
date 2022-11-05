@@ -1,0 +1,525 @@
+{\rtf1\ansi\ansicpg1252\deff0\deflang1033{\fonttbl{\f0\fswiss\fcharset0 Arial;}}
+\viewkind4\uc1\pard\f0\fs20 HOWTO set up a Network with Diskless Workstations using Debian GNU/Linux\par
+Table of contents\par
+0. Intro\par
+\par
+    * 0.0 General\par
+    * 0.1 Disclaimer\par
+    * 0.2 Thanks\par
+\par
+1. Documentation\par
+2. Server\par
+\par
+    * 2.1 Basic installation\par
+    * 2.2 DHCP daemon\par
+    * 2.3 NIS server\par
+    * 2.4 NFS server\par
+    * 2.5 Miscellaneous\par
+\par
+3. The Clients\par
+\par
+    * 3.1 Kernel\par
+    * 3.2 devfs\par
+    * 3.3 The magic script...\par
+    * 3.4 The magic software... <03-09-15>\par
+    * 3.5 Miscellaneous\par
+\par
+4. Booting\par
+\par
+    * 4.1a The boot floppy\par
+    * 4.1b Loading the kernel from the network\par
+    * 4.2 Make a backup of your system!\par
+    * 4.3 The first time...\par
+\par
+5. Further changes and comments\par
+\par
+    * 5.1 X windows system\par
+    * 5.2 Logging\par
+    * 5.3 IceWM\par
+    * 5.4 Shared disc space\par
+    * 5.5 Miscellaneous comments\par
+\par
+6. Add-ons\par
+\par
+    * 6.1 CUPS (server)\par
+    * 6.2 CUPS (clients)\par
+    * 6.3 Applications\par
+\par
+0. Intro\par
+\par
+This document describes the setup of a network environment for diskless workstations. It's based on notes I made during my work at subnet - platform for media art and experimental technologies.\par
+\par
+The topology consists of a Debian-based server providing an other (from the server basically independent) Debian-based Linux installation for the clients' "/"-systems. The kernel version used is 2.4.19, IPs are dynamically assigned using ISC's DHCP daemon.\par
+Several diskless clients can be used simultaneously, as /etc, /var and /tmp (as well as some swap space) are kept in seperate directories on the server. (They are automatically regenerated each time a client boots.)\par
+As usual, /proc is used on each client.\par
+/dev will be generated automatically using devfs(d). This way, each client has it's own /dev directory according to its hardware. (Remember: devfs is a similar "non-existing" filesystem as is used for /proc.)\par
+\par
+The advantage is that the clients make use of only one 1MB ramdisk, thus it's possible to use a fully qualified (diskless) Linux with X (and e.g. IceWM as the window manager) with "only" a P166 and 64MB of RAM.\par
+The disadvantage: As we are storing lot's of data (/etc, /var, /tmp, swap) on the server's disk, this solution makes heavy use of the network.\par
+It's up to you to decide whether to "waste" network bandwidth and storage on the server (this solution) or for example "sacrifice" lot's of RAM (Network-boot-HOWTO).\par
+Remember: There's no free lunch! :-)\par
+0.1 Disclaimer\par
+\par
+This document comes with no warranty. Do everything at your own risk.\par
+Suggestions, improvements and similar are always welcome! :-)\par
+0.2 Thanks...\par
+\par
+Finally many thanks to "Jogi" and "Stiegi" for both helping me in getting this thing to work! :-)\par
+1. Documentation\par
+\par
+Diskless-HOWTO\par
+This holds a lot of general information about diskless workstations and according specialities.\par
+Latest update (as of this writing): 2002-05-23\par
+\par
+Diskless-root-NFS-HOWTO\par
+The solution presented shares the same "/" directory for both the server and the clients. This has its advantages, but was not my choice. I like clients being seperated from servers. :)\par
+Latest update (as of this writing): 1999-03-30\par
+\par
+Diskless-root-NFS-other-HOWTO\par
+A rather "normal" diskless clients solution is shown here. Unfortunately, I could not follow all of its descriptions, it seemed a bit leaky to me sometimes.\par
+Latest update (as of this writing): 2001-09-12\par
+\par
+Network-boot-HOWTO\par
+IMHO the best of the four official HOWTO's I've read. Describes a complete solution. The disadvantage to me seemed to be that the clients need lots of RAM due to heavy use of RAM-disks.\par
+Latest update (as of this writing): 2002-04-28\par
+\par
+/usr/src/linux/Documentation/nfsroot.txt\par
+Kernel parameters necessary for the diskless workstations' boot floppies.\par
+\par
+Linux X-terminal Details for Debian\par
+A different approach where the clients' programs actually run on the server. (Thanks to Hendrik W. for sending me the link to this document!)\par
+Latest update (as of this writing): 2002-05-21\par
+2. The Server\par
+The most important things concerning the server...\par
+2.1 Basic installation\par
+\par
+First, install Debian as usual. (It will work with any other distribution too, but I'll describe the Debian-way.) The machine will simply be called "server", installed on e.g. /dev/hda1, with its eth1 configured as 192.168.0.1/24. (eth0 is the interface to the world outside, masquerading doing its job as usual to get the clients from eth1 to be able to use the internet.)\par
+2.2 DHCP daemon\par
+\par
+apt-get install dhcp installs the dhcp daemon (version 2.0pl5-11 as of today).\par
+\par
+server:/etc/dhcpd.conf\par
+  option routers 192.168.0.1;\par
+  option domain-name-servers IP-of-your-DNS-1;\par
+  option domain-name-servers IP-of-your-DNS-2;\par
+  subnet 192.168.0.0 netmask 255.255.255.0 \{\par
+    range 192.168.0.2 192.168.0.127;\par
+    default-lease-time 43200;\par
+    max-lease-time 86400;\par
+  \}\par
+\par
+server:/etc/default/dhcp\par
+  INTERFACES="eth1"\par
+\par
+2.3 NIS server\par
+\par
+Following /usr/share/doc/nis/nis.debian.howto.gz (doing "apt-get install nis" before), you can easily configure the server as the NIS master.\par
+(I had to use the unsecure 0.0.0.0 0.0.0.0 in /etc/ypserv.securenets, as for some reason 255.255.255.0 192.168.0.0 didn't work.)\par
+\par
+The NIS-provided users should have /data/home/$USERNAME as their $HOME directory. Thus create /data and /data/home and change the variable DHOME in server:/etc/adduser.conf to DHOME=/data/home. Adding users with "adduser" this way, they will be able to use their $HOME directory on every diskless client (as server:/data is mounted on the client side to /data using NFS).\par
+2.4 NFS server\par
+apt-get install nfs-kernel-server nfs-common (given your server's kernel supports kernel-NFS) and the following /etc/exports should do the trick.\par
+\par
+server:/etc/exports\par
+  /dlc    192.168.0.0/255.255.255.0(rw,no_root_squash)\par
+  /data   192.168.0.0/255.255.255.0(rw)\par
+\par
+/dlc will hold the diskless clients' "/" filesystem. Creating this will be dealt with in the clients section.\par
+2.5 Miscellaneous\par
+\par
+server:/etc/fstab\par
+  [...]\par
+  /dev/hda5 /dlc/ ext3 defaults 0 2\par
+  [...]\par
+\par
+server:/etc/init.d/my_iptables to be executed when booting the server setting up iptables, masquerading and such things concerning the server only.\par
+\par
+server:/etc/init.d/my_misc to be executed when booting the server setting up DMA and other miscellaneous stuff concerning the server itself.\par
+3. The Clients\par
+\par
+Once the server-installation works fine, just install again, e.g. to /dev/hda5. This new and seperate system is the one the clients will use as their "/". The server mounts this partition to /dlc and shares it via NFS.\par
+\par
+Comment: The creation of a boot-floppy and the first diskless boot process will be described later.\par
+3.1 Kernel\par
+\par
+Here is my kernel-config I used for the clients' 2.4.19-kernel. The main features are:\par
+\par
+    * nfs\par
+    * smbfs\par
+    * devfs\par
+    * dhcp-and-bootp-at-boot-thing\par
+    * root-over-nfs\par
+    * ramdisk\par
+    * loop-device\par
+    * framebuffer\par
+    * a few network-cards\par
+    * a few soundcards\par
+\par
+Exclude devpts support (as the devfs FAQ told me to do).\par
+\par
+Using Debian's kernel-package (as described here) I compiled the kernel and got the file kernel-image-2.4.19-04_diskless.04_i386.deb.\par
+Install it on the server executing:\par
+\par
+    * chroot /dlc/\par
+    * dpkg -i kernel-image-2.4.19-04_diskless.04_i386.deb\par
+\par
+This way, you'll make /dlc/ your new and temporary /. Afterwards you install the package as usual. (Of course you need a basically running (Debian-)system mounted to /dlc/, but remember, you've already created that, haven't you?)\par
+Comment: You won't be able to boot the server with this (diskless) kernel image, as it does not include IDE/SCSI disk support. Thus it won't make sense to include it in your server's lilo.conf...\par
+3.2 devfs\par
+\par
+The devfs FAQ is quite a good place to scan through the most important things 'round devfs.\par
+We'll use it in order for every client to have its own /dev without having to create a (space-wasting) RAM-disk which holds all the traditional device entries.\par
+\par
+In order to use it, you need the devfsd installed on the clients' system. This is just as simple as executing the following on the server:\par
+\par
+    * chroot /dlc/\par
+    * apt-get install devfsd\par
+\par
+Remember to exclude devpts from the kernel as mentioned above.\par
+3.3 The magic script ...\par
+\par
+... is doing all the work at boot time which enables you to run several clients at the same time which all use the same "/" (server:/dlc/ in our case). It's not perfect (as for example with this solution the two directories /et and /var are copied (at the client's boot time) from the server to the client and back to the server again). Improvements are always welcome! :-)\par
+Here it is.\par
+\par
+A description of what happens can be found at the beginning of the file and throughout the script itself as comments.\par
+\par
+You need to save this file as server:/dlc/etc/init.d/diskless and create /dlc/etc/rcS.d/S11diskless to be a symlink to it (execute "cd /dlc/etc/rcS.d/" and "ln -ivs ../init.d/diskless S11diskless").\par
+Update -- 03-09-15:\par
+As an alternative to this "magic script", I was working on a simple C-base client/server-program which solves the above mentioned issues of copying tons of data from the server to the client and back again. Check out section The Magic Software...!\par
+3.4 The Magic Software...\par
+\par
+The GPL'ed program dlnetsw-0.1 (Diskless Network Software) serves as an alternative to the "magic script" mentioned above. The advantage here is, that it prevents a great whole bunch of data from being copied from server to client and back again during a client's boot process.\par
+AFAIR it also holds an updated version of the magic-script from above...\par
+\par
+DISCLAIMER: This software is not tested.\par
+Though I believe it should work, I had no chance to test it yet, sorry! As goes for everything on this page: Use at your own risk!!\par
+\par
+Oh, and please, I'd be grateful for any feedback! :)\par
+3.5 Miscellaneous\par
+interfaces\par
+\par
+Edit server:/dlc/etc/network/interfaces and comment out everything concerning eth0. The network devices is already loaded and configured by the kernel in order to be able to mount "/" via NFS.)\par
+fastboot\par
+\par
+According to http://www.tldp.org/HOWTO/Network-boot-HOWTO/x251.html create the file server:/dlc/fastboot ("touch /dlc/fastboot; chmod 0 /dlc/fastboot") in order to avoid filesystem checks of the root-filesystem at boot time.\par
+Make the following change:\par
+\par
+server:/dlc/etc/init.d/checkfs.sh:\par
+  [...]\par
+  # rm -f /fastboot /forcefsck\par
+\par
+This prevents /fastboot from being deleted at boot time as we definitely need it every time we start our machine.\par
+mtab\par
+\par
+It's essential to replace the client's /etc/mtab with a symlink to /proc/mounts.\par
+(You know the drill: "chroot /dlc" and "ln -ivs /proc/mounts /etc/mtab".)\par
+fstab\par
+\par
+server:/dlc/etc/fstab:\par
+  proc\tab\tab\tab /proc\tab proc\tab defaults\tab 0\tab 0\par
+  /dev/fd0\tab\tab /floppy\tab auto\tab user,noauto\tab 0\tab 0\par
+  /dev/cdrom\tab\tab /cdrom\tab iso9660\tab ro,user,noauto\tab 0\tab 0\par
+  192.168.0.1:/data\tab /data\tab nfs\tab defaults\tab 0\tab 0\par
+\par
+NIS client\par
+\par
+Change server:/dlc/etc/passwd, group, shadow and nsswitch.conf according to /usr/share/doc/nis/nis.debian.howto.gz to make the diskless clients use the NIS server.\par
+Some directories and other stuff\par
+\par
+Do the following in order to create the necessary directory structure.\par
+This allows /etc and /var to be copied at boot time freshly from their current defaults and hide the default directories on the server by mounting the RAM disk which again holds the symlink to this client's individual version valid until the next reboot.\par
+\par
+  chroot /dlc\par
+    # don't forget this one! :)\par
+  \par
+  mkdir /data\par
+  mkdir /data/home\par
+  ln -ivs data/home\par
+  \par
+  mkdir /tmp-indivs/\par
+  chmod 1777 /tmp-indivs/\par
+    # will hold directories such as "192.168.0.130" which\par
+    # again hold each client's etc, var, tmp and swap\par
+  mkdir /mnt/ramdisk/\par
+  mkdir /mnt/ramdisk/my-indiv/\par
+\par
+  mv /etc /mnt/ramdisk/my-indiv/etc\par
+  mv /var /mnt/ramdisk/my-indiv/var\par
+  mv /tmp /mnt/ramdisk/my-indiv/tmp\par
+\par
+  ln -ivs mnt/ramdisk/my-indiv/etc\par
+  ln -ivs mnt/ramdisk/my-indiv/var\par
+  ln -ivs mnt/ramdisk/my-indiv/tmp\par
+\par
+    # /mnt/ramdisk/my-indiv/ holds the default etc, var and tmp directories\par
+    # at boot time the 1 MB ramdisk will be mounted to /mnt/ramdisk/ \par
+    # /mnt/ramdisk/my-indiv/ will be created as a symlink to /tmp-indivs/$MYIP/\par
+    # thus the links /etc a.s.o. again point at valid directories, but after\par
+    # booting each client will have it's own such directories\par
+\par
+  dd if=/dev/zero of=/swap-template bs=1k count=64k\par
+\par
+The last command creates a 64 MB swap file template. This is used if a client has never booted before. (More accurately: if the file /dlc/tmp-indivs/$MYIP/swap doesn't exist yet at the client's boot time.)\par
+That's all there is to do!\par
+\par
+I perhaps forgot some one thing and did not mention some other thing, so the following first diskless boot might not work as it should. Anyway, try it, check out what's wrong, fix it and try again.\par
+I'd be happy to hear about corrections, comments or other input.\par
+4. Booting\par
+\par
+There are two options of how to boot:\par
+\par
+   1. You can put your boot loader and the kernel on a floppy and load the kernel from it, see section "The boot floppy". This is what I'd recommend when first installing your network.\par
+   2. You can create a floppy with a boot loader knowing your NIC which loads the kernel image via the network (using DHCP to get an IP and TFTP to get the image), see section Loading the kernel from the network. As soon as you've debugged your diskless clients network and know it works, this is probabely what you want as it provides a faster boot process and is much cooler. :)\par
+\par
+4.1a The boot floppy\par
+\par
+The boot floppy can be created on any machine you like, most easily on the server itself. (Mind: You will need msdos-filesystem-support, vfat might not suffice.)\par
+Just do:\par
+\par
+  apt-get install syslinux dosfstools\par
+  mkfs.msdos /dev/fd0   # WARNING: all content on the floppy is deleted !!\par
+  syslinux /dev/fd0\par
+  mount /mnt/floppy\par
+    # it might be necessary to give the filesystem type explicitly here:\par
+    #   mount -t msdos /dev/fd0 /mnt/floppy\par
+  cp /dlc/boot/vmlinuz-2.4.19-04 /mnt/floppy/linux\par
+  sync\par
+\par
+... create the following file ...\par
+\par
+server:/mnt/floppy/syslinux.cfg:\par
+  default linux\par
+  append init=/sbin/init root=/dev/nfs \par
+    ip=:192.168.0.1:192.168.0.1:255.255.255.0:::'bootp'\par
+    nfsroot=192.168.0.1:/dlc vga=0x314 ramdisk_size=1024\par
+  prompt 1\par
+  timeout 30\par
+\par
+... (with the 3 "append"-lines here as one line in the file) and umount the floppy again.\par
+Check out /usr/src/linux/Documentation/nfsroot.txt to find out what these options do.\par
+4.1b Loading the kernel from the network\par
+\par
+In order to not only have the filesystem be loaded from the the server but also the kernel image when booting, you'll need to complete the following tasks:\par
+\par
+   1. Create an etherboot-based floppy which supports your NIC and fetches the kernel via the network.\par
+   2. Tweak your kernel-image.\par
+   3. Install a TFTP-server at the server which provides the image.\par
+   4. Re-configure your DHCP-server.\par
+\par
+Etherboot\par
+\par
+You can either download and compile Etherboot or use an online version. I chose number "one".\par
+Insert a blank floppy and run the following commands:\par
+\par
+  cd etherboot-5.0.9/src\par
+  make\par
+  make bin32/3c905c-tpo.fd0\par
+\par
+Replace "3c905c-tpo" with your client's network card. (According to the Ethernet documentation, you could also run the command "cat bin/boot1a.bin bin32/3c509.lzrom > /dev/fd0" instead of the last one mentioned above (which is exactly what "make bin32/..." actually does).)\par
+Addon:\par
+Other boot image formats can be used too. Although I've never tried this: it should be possible to create a LILO based boot floppy with which you can choose from several NICs at boot time. (Without this, your boot floppy holding the Etherboot image only works with a specific NIC.)\par
+Check out this page from the Etherboot-HOWTO, which also links to the LILO with Etherboot HOWTO.\par
+mknbi\par
+\par
+You need to prepare the diskless client's Linux kernel image. (Mind: The last three lines again are to be typed in just one line!).\par
+\par
+  apt-get install mknbi\par
+  mkdir /tftpdir\par
+  mknbi-linux --append="init=/sbin/init root=/dev/nfs \par
+    ip=:192.168.0.1:192.168.0.1:255.255.255.0:::'bootp' nfsroot=192.168.0.1:/dlc\par
+    vga=0x314 ramdisk_size=1024" --output=/tftpdir/vmlinuz.dlc /dlc/boot/vmlinuz-2.4.20-01\par
+\par
+TFTP server\par
+\par
+Install and configure the TFTP (Trivial FTP) server:\par
+\par
+  apt-get install tftpd\par
+\par
+server:/etc/inetd.conf:\par
+  [...]\par
+  #tftp  dgram  udp  wait  nobody  /usr/sbin/tcpd  /usr/sbin/in.tftpd /boot\par
+  tftp  dgram  udp  wait  nobody  /usr/sbin/tcpd  /usr/sbin/in.tftpd /tftpdir\par
+\par
+/etc/init.d/inetd restart\par
+\par
+DHCP server\par
+\par
+You should already have a working DHCP server from some step above. Extend the server:/etc/dhcpd.conf by just 2 lines in order to have the following content:\par
+\par
+server:/etc/dhcpd.conf:\par
+  option routers 192.168.0.1;\par
+  option domain-name-servers 193.170.141.10;\par
+  option domain-name-servers 193.170.141.11;\par
+  subnet 192.168.0.0 netmask 255.255.255.0 \{\par
+    range 192.168.0.2 192.168.0.127;\par
+    default-lease-time 43200;\par
+    max-lease-time 86400;\par
+    # Etherboot:\par
+    filename "/tftpdir/vmlinuz.dlc";\par
+    next-server 192.168.0.1;\par
+  \}\par
+\par
+/etc/init.d/dhcpd restart\par
+\par
+You can easily have different clients boot with different kernel images. Check out the Etherboot documentation for more information.\par
+4.2 Make a backup of your system!\par
+\par
+Make a backup of your freshly installed clients' system. I often use a spare partition for such things and do "cd /dlc; find . -xdev | cpio -pm /mnt/backup".\par
+"cd /mnt; tar cvzf diskless-backup.tar.gz diskless/" should work fine too, I suppose.\par
+4.3 The first time...\par
+\par
+Get your diskless workstation, network-connect it to the server, insert the floppy, boot from it and hopefully enjoy your diskless workstation.\par
+\par
+Remember:\par
+The "magic script" from above copies lot's of stuff over the network from the server to the client and back again. When booting a client for the first time, this will result in a delay of about 1 minute or more. Later boots (without deleting this IP's directory in tmp-indivs/ in the mean time) will need about 30 or more delaying seconds.\par
+\par
+Remember too:\par
+... log in as a normal user, provided by the NIS server. Do not use "root" on the client, unless you really need to and know what you're doing. Installing new software packages must always be done on the server, chroot-ing into /dlc. (Lot's of packages install config-files in /etc, but more importantly the Debian-Package-database in /var changes. Both these directories are only changed for all clients when installing software on the server itself!)\par
+\par
+Possible pitfalls: If your client can't load the kernel successfully, try syslinux -s /dev/fd0 when creating the boot floppy. According to the man page, this installs a "safe, slow and stupid" version of syslinux.\par
+If this doesn't work for you either (which at least was the case for my old Pentium 166 machines), try lilo. Create a boot floppy holding the kernel using lilo as the boot manager. This did the trick for me.\par
+5. Further changes and comments\par
+\par
+I'll assume now that you've managed to boot your diskless workstation perfectly, checked out etc & co in /tmp-indivs/$MYIP/, did not log into the clients as root but as a normal user, and so on. :-)\par
+I'll describe some IMHO useful setup for the clients' system here, while - of course - these commands are to be executed on the server, unless stated otherwise.\par
+5.1 X window system\par
+\par
+  chroot /dlc\par
+  tasksel\par
+    select "X window system"\par
+\par
+For some reason, the initial Debian's X configurations never works for me. :-)\par
+Use "dpkg-reconfigure xserver-xfree86" to do a correct setup using vesa as the key option.\par
+You can find my XF86Config-4 here (which uses 1024x768 and 16 bit colors as the default settings).\par
+Mind: A thing I turned off is "DPMS" as the FB driver seems to crash as soon as the screen should be turned off.\par
+\par
+Comments:\par
+The "magic script" copies linked files instead of the symlinks themselves. "X" needs /etc/X11/X to be a symlink, thus the script restores this link again after copying the /etc directory at boot time.\par
+Create the files server:/dlc/etc/X11/XF86Config-4_1024x768 and XF86Config-4_800x600 accordingly and make XF86Config-4 a copy of the first one. This way the "magic script" can use the correct file when selecting the resolution at boot time.\par
+Default color depth is 16 bit as for example some notebooks I know do not support 24 bit colors with the vesa-driver.\par
+\par
+If everything works and you can start X on the client, make a backup again and go on installing some goodies. :-)\par
+5.2 Logging\par
+\par
+Every client has it's own /var directory, so it can log as much as it wants to. It can also execute logrotate and such stuff. Nevertheless, when rebooting the machine, all of these logs are deleted!\par
+If you would like to have a copy of the logs (which I strongly suggest), do the following in order to get every diskless client's syslog-entries being logged to the server too:\par
+\par
+server:/etc/init.d/sysklogd:\par
+  SYSLOGD="-r"\par
+\par
+server:/dlc/etc/syslog.conf:\par
+  *.* /dev/tty12\par
+  *.* @192.168.0.1\par
+  [...]\tab\par
+\par
+5.3 IceWM\par
+\par
+IceWM is a fast but quite beautiful window manager. I use it successfully with my P166 and 64 MB RAM.\par
+\par
+  chroot /dlc\par
+  dselect\par
+    +icewm\par
+    +icepref\par
+    +iceconf\par
+    +icemc\par
+    +iceme\par
+\par
+5.4 Shared disc space\par
+\par
+In order for all clients to have rw-access to one directory, I created server:/data/shared, included it in server:/etc/exports and changed the system's umask to 000 along with adding "umask 000" at the end of /etc/skel/.bashrc.\par
+That's a horribly insecure and terrible hack! So don't do that if you don't need it. Better think of a solution based on groups and similar access rights.\par
+5.5 Miscellaneous comments\par
+\par
+Mount "/" read-only: It would be nice to remount the "/" filesystem read-only after booting the client has finished.\par
+Unfortunately I couldn't manage to do that. mount -o remount,ro exited with an error message telling me "/ is busy" (or something like that).\par
+Suggestions?\par
+\par
+Loading the kernel via network\par
+That's the last thing which really should be done: getting the kernel to boot not from a floppy disk but have it transferred to the client using TFTP. Besides being much faster, this solution was definitely much cooler.\par
+One of the projects dealing with that is Etherboot.\par
+6. Add-ons\par
+\par
+This chapter holds some additional information about stuff as installing various programmes or a printer system. I include it here as it is part of this whole solution providing a server for some locally connected diskless workstations which act as fully operational public access terminals.\par
+6.1 CUPS (server)\par
+\par
+In order to have the server take the role of a print server, I used CUPS:\par
+\par
+  dselect\par
+    +cupsys\par
+    +cupsomatic-ppd\par
+    +cupsys-bsd\par
+    +...\par
+\par
+  lpadmin -p LaserJet -E -v parallel:/dev/lp0 -P /usr/share/cups/model/HP/LaserJet_4_Plus-ljet4.ppd\par
+\par
+  lynx http://localhost:631/\par
+    -> manage printers  [ authenticate as "root" and it's password ]\par
+      -> default paper size: A4\par
+\par
+  lpr /usr/share/cups/data/testprint.ps\par
+\par
+Here's how to get CUPS working with an HP DeskJet 5550.\par
+\par
+Once printing locally on the server works, allow the clients to find the server and print to it...\par
+\par
+  server:/etc/cups/cupsd.conf:\par
+    [...]\par
+    # Browsing Off\par
+    Browsing On\par
+    [...]\par
+    <Location />\par
+    Order Deny,Allow\par
+    Deny From All\par
+    Allow From 127.0.0.1\par
+    Allow From 192.168.0.*\par
+    </Location>\par
+\par
+  server:/etc/init.d/cupsys restart\par
+\par
+In order to also provide printing services for Windows-Clients in the local network along with our diskless workstations, install the Samba package on the server and follow these descriptions.\par
+6.2 CUPS (clients)\par
+\par
+The clients need the CUPS packages installed. Some minor changes to CUPS' config-files are necessary (as shown below).\par
+\par
+  chroot /dlc\par
+  dselect\par
+    +cupsys\par
+    +...\par
+\par
+  server:/dlc/etc/cups/cupsd.conf\par
+    [...]\par
+    # Browsing Off\par
+    Browsing On\par
+\par
+  server:/dlc/etc/cups/client.conf\par
+    ServerName 192.168.0.1\par
+\par
+This way, the clients will detect the server's printer themselves.\par
+(The manual installation of the printer (for example in an init-script at boot time) would be to execute "lpadmin -p LaserJet -E -v ipp://192.168.0.1/printers/LaserJet".)\par
+6.3 Applications\par
+\par
+Install whatever you need. The following is a selection of what I think is useful...\par
+\par
+  chroot /dlc\par
+  dselect\par
+    +gv\par
+    +vorbis-tools\par
+    +xmms\par
+    +mpg321\par
+    +xpdf\par
+    +abiword\par
+    +mozilla\par
+    +gftp\par
+    +xchat\par
+    +nedit\par
+\par
+Download the Flash-Player, extract the tar.gz-file and copy ShockwaveFlash.class and libflashplayer.so to server:/dlc/usr/lib/mozilla/plugins/.\par
+\par
+In order to get Java running, follow these instructions.\par
+\par
+RealPlayer8 can only be installed running a graphical X environment. Just install somewhere, move the directory RealPlayer8/ to /opt and best make it easily available by creating a symlink in /usr/bin to /opt/RealPlayer8/realplay.\par
+Copy rpnp.so to server:/dlc/usr/lib/mozilla/plugins in order to get the Mozilla-Plugin working.\par
+\par
+To complete the PDF stuff, I often install the Acrobat Reader along with xpdf. \par
+}
+ 
