@@ -1,0 +1,49 @@
+// TestEncryDll.h : main header file for the TESTENCRYDLL application
+//
+
+#if !defined(AFX_TESTENCRYDLL_H__6474D33D_05F8_466C_853F_50B4BF43FBB1__INCLUDED_)
+#define AFX_TESTENCRYDLL_H__6474D33D_05F8_466C_853F_50B4BF43FBB1__INCLUDED_
+
+#if _MSC_VER > 1000
+#pragma once
+#endif // _MSC_VER > 1000
+
+#ifndef __AFXWIN_H__
+	#error include 'stdafx.h' before including this file for PCH
+#endif
+
+#include "resource.h"		// main symbols
+
+/////////////////////////////////////////////////////////////////////////////
+// CTestEncryDllApp:
+// See TestEncryDll.cpp for the implementation of this class
+//
+
+class CTestEncryDllApp : public CWinApp
+{
+public:
+	CTestEncryDllApp();
+
+// Overrides
+	// ClassWizard generated virtual function overrides
+	//{{AFX_VIRTUAL(CTestEncryDllApp)
+	public:
+	virtual BOOL InitInstance();
+	//}}AFX_VIRTUAL
+
+// Implementation
+
+	//{{AFX_MSG(CTestEncryDllApp)
+		// NOTE - the ClassWizard will add and remove member functions here.
+		//    DO NOT EDIT what you see in these blocks of generated code !
+	//}}AFX_MSG
+	DECLARE_MESSAGE_MAP()
+};
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+//{{AFX_INSERT_LOCATION}}
+// Microsoft Visual C++ will insert additional declarations immediately before the previous line.
+
+#endif // !defined(AFX_TESTENCRYDLL_H__6474D33D_05F8_466C_853F_50B4BF43FBB1__INCLUDED_)
