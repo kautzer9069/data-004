@@ -1,0 +1,14 @@
+double
+minimial(double *vec,int dim)
+{
+	int i;
+	double mini;
+
+	mini=10000.0;
+	for (i=0;i<dim;i++)
+	{
+		if (vec[i]<mini)
+			mini=vec[i];
+	}
+	return(mini);
+}
