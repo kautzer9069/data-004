@@ -1,0 +1,21 @@
+#include <math.h>
+
+#define pi 3.1415
+
+double
+gaussian(double x)
+{
+        double resu;        
+        
+        resu=-0.5*x*x;        
+        
+        resu=exp(resu);
+        resu=resu/sqrt(2*pi);
+
+        return(resu);
+}
+
+
+
+
+        
