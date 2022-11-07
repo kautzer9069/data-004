@@ -1,0 +1,131 @@
+Loading... This is a cached copy of http://cran.r-project.org  
+  Search Advanced Code Search 
+
+Search all codeSearch in http://cran.r-project.org 
+ 
+? http://cran.r-project.org ? contrib ? main ? Rwave_1.24.tar.gz ? Rwave ? src ? randomwalker2.c
+Files|Outline 
+ 
+Show 5 parent directories
+http://cran.r-project.org
+contrib
+main
+Rwave_1.24.tar.gz
+Rwave
+Swave.h
+bee_annealing.c
+choldc.c
+compinteg.c
+complex.c
+complex.h
+crazy_family.c
+cwt_dog.c
+cwt_maxima.c
+cwt_morlet.c
+cwt_phase.c
+cwt_thierry.c
+dau.c
+dau_wave.c
+dau_wave.h
+denoise.h
+dualwavelet.c
+dwfileio.c
+dwfilter.c
+dwinverse.c
+dwkernel.c
+dwvector.c
+dyadic.h
+extrema.c
+fft.c
+four1.c
+gabor.c
+gkernel.c
+hessian_climbers.c
+icm.c
+kernel.c
+kernel.h
+mreconst.c
+multiply.c
+mw.c
+optimize.c
+pca_climbers.c
+pca_family.c
+polint.c
+pvalue.h
+qcksrt.c
+random.h
+randomwalker.c
+/***************************************************************
+*              (c) Copyright  1997                             *
+*                         by                                   *
+*     Author: Rene Carmona, Bruno Torresani, Wen-Liang Hwang   *
+*                 Princeton University                         *
+*                 All right reserved                           *
+***************************************************************/
+
+#include "Swave.h"
+#include "denoise.h"
+
+
+long idum = -7;
+
+
+
+/******************************************************************
+*               UNIFORM RANDOM NUMBER GENERATOR
+*******************************************************************/
+
+
+#define IA 16807
+#define IM 2147483647
+#define AM (1.0/IM)
+#define IQ 127773
+#define IR 2836
+#define NTAB 32
+#define NDIV (1+(IM-1)/NTAB)
+#define EPS 1.2e-7
+#define RNMX (1.0-EPS)
+
+/* ran1 (from Numerical Recipes): uniform random numbers between 0 and 1 */
+double ran1(long *idum)
+{
+    int j;
+    long k;
+    static long iy=0;
+    static long iv[NTAB];
+    float temp;
+
+    if(*idum <= 0 || !iy) {
+      if(-(*idum) < 1) *idum = 1;
+      else *idum = -(*idum);
+      for(j = NTAB+7; j >= 0; j--) {
+        k = (*idum)/IQ;
+        *idum = IA * (*idum - k *IQ) - IR*k;
+        if (*idum < 0) *idum += IM;
+        if(j < NTAB) iv[j] = *idum;
+      }
+      iy = iv[0];
+    }
+    k = (*idum)/IQ;
+    *idum = IA*(*idum-k*IQ)-IR*k;
+    if(*idum < 0) *idum += IM;
+    j = iy/NDIV;
+    iy = iv[j];
+
+    iv[j] = *idum;
+    if((temp = AM * iy) > RNMX) return RNMX;
+    else return temp;
+}
+
+
+
+
+#undef IA
+#undef IM
+#undef AM
+#undef IQ
+#undef IR
+#undef NTAB
+#undef NDIV
+#undef EPS
+#undef RNMX
