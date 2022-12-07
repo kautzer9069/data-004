@@ -1,0 +1,19 @@
+REM DISCID 1E02DE03
+REM COMMENT "ExactAudioCopy v0.99pb5"
+PERFORMER "陳奕迅"
+TITLE "Stranger Under My Skin (Disc 2)"
+FILE "陈奕迅 -Stranger Under My Skin (Disc 2).ape" WAVE
+  TRACK 01 AUDIO
+    TITLE "樂園 Duet With 黃韻玲"
+    PERFORMER "陳奕迅"
+    INDEX 01 00:00:00
+  TRACK 02 AUDIO
+    TITLE "等你愛我"
+    PERFORMER "陳奕迅"
+    INDEX 00 03:56:72
+    INDEX 01 03:56:73
+  TRACK 03 AUDIO
+    TITLE "因為愛情 Duet With 王菲"
+    PERFORMER "陳奕迅"
+    INDEX 00 08:37:17
+    INDEX 01 08:37:18
